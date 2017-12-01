@@ -21,9 +21,10 @@ class Checkings{
 		int check=0;
 		Checkings();
 		Checkings(string input);
-		int getcheck();
+		int checkingsgetcheck();
 		void createcheckings();
 		int checkpin(int pin_input);
+		int getpin();
 		virtual void operator+(float deposit);
 		virtual void operator-(float withdraw);
 		void updatefile();
@@ -33,7 +34,7 @@ class Checkings{
 };
 
 Checkings::Checkings(){
-	cout<<"Checkings Default constructor"<<endl;
+	//cout<<"Checkings Default constructor"<<endl;
 	moneyamount=0;
 	pinnumber=0;
 }
@@ -56,7 +57,16 @@ Checkings::Checkings(string input){
 
 }
 
-int Checkings::getcheck(){
+int Checkings::checkingsgetcheck(){
+	ifstream myfile;
+	myfile.open(checkingsfilename);
+	if(myfile.is_open()){
+		check=1;
+		myfile.close();
+	}
+	else{
+		check=2;
+	}
 	return check;
 }
 
@@ -130,6 +140,16 @@ int Checkings::checkpin(int pin_input){
 	}
 }
 
+int Checkings::getpin(){
+	ifstream myfile;
+	myfile.open(checkingsfilename);
+	myfile>>name;
+	myfile>>pinnumber;				//notice pinnumber here is an int and when it was intialized it was a vector <int>
+	myfile.close();
+	return pinnumber;
+}
+
+
 void Checkings::operator -(float withdraw){
 	moneyamount-=withdraw;
 }
@@ -157,6 +177,7 @@ class Savings: public Checkings{
 		string savingsfilename;
 		Savings();
 		Savings(string input);
+		int savingsgetcheck();
 		void createsavingsaccount(float savingsstart);
 		void operator+(float deposit);			//this operator is a virtual operator
 		void operator-(float withdraw);			//this operator is also a virtual operator
@@ -200,6 +221,20 @@ void Savings::createsavingsaccount(float savingsstart){
 	myfile.close();
 }
 
+int Savings::savingsgetcheck(){
+	ifstream myfile;
+	myfile.open(savingsfilename);
+	if(myfile.is_open()){
+		check=1;
+		myfile.close();
+	}
+	else{
+		check=2;
+	}
+	return check;
+
+}
+
 void Savings::operator -(float withdraw){
 	savings_money-=withdraw;
 }
@@ -226,40 +261,49 @@ int main() {
 	//put create an object with a fingerprint
 	std::cout<<std::setprecision(2)<<std::fixed;
 	string name;
-	int check = 0,yorn=0,pin=0,pin_correctness=0,choice=0,savings_check=0, transferbool=0;
+	int exitcheck=0, check=0, yorn=0, pin=0, pin_correctness=0;
+	int onlyonce=0, choice=0, savings_check=0, transferbool=0;
 	float deposit,withdraw,savings_start, savings_deposit,savings_withdraw;
 	cout<<"Enter your name to set up an account or access an old account"<<endl;
 	getline(cin,name);					//inputs fingerprint/name
-	Checkings checkingsaccount(name);				//name or fingerprint is then checked to see if it is in the system
+	Checkings checkingsaccount(name);			//name or fingerprint is then checked to see if it is in the system
 	Savings savingsaccount(name);
-	savings_check = savingsaccount.getcheck();
-	check = checkingsaccount.getcheck();			//this check is to see if the person already has an existing account with us
-	if (check==1){
+	while(exitcheck==0){
+	//Checkings checkingsaccount(name);			//name or fingerprint is then checked to see if it is in the system
+	//Savings savingsaccount(name);
+	savings_check = savingsaccount.savingsgetcheck();
+	check = checkingsaccount.checkingsgetcheck();			//this check is to see if the person already has an existing account with us
+	//while(exitcheck=0){
+	if (check==1 && savings_check==2){
 		//This is a very long if statement and may not be the best approach but it checks if there is an existing file
-		cout<<"Has an existing account"<<endl;
-		cout<<"please enter your pin number:\t"<<endl;
-		cin>>pin;						//this pin can be entered continously unlike when the pin is initialized
-		pin_correctness=checkingsaccount.checkpin(pin);	//checks to see if the pin entered is the same as the pin for the account
-		if (pin_correctness!=1){
-			cout<<"The pin that was entered was incorrected please re-enter, you have one more chance to re-enter:\t"<<endl;
-			cin>>pin;					//gives the person a second chance to enter their pin correctly
-			pin_correctness=checkingsaccount.checkpin(pin);
-			if(pin_correctness!=1){
-				cout<<"pin number was entered incorrectly twice program is now terminated"<<endl;
-				return 0;				//if the pin is not entered correctly a second time then the program ends
+		if(onlyonce==0){
+			cout<<"Has an existing account"<<endl;
+			cout<<"please enter your pin number:\t"<<endl;
+			cin>>pin;					//this pin can be entered continously unlike when the pin is initialized
+			pin_correctness=checkingsaccount.checkpin(pin);	//checks to see if the pin entered is the same as the pin for the account
+			if (pin_correctness!=1){
+				cout<<"The pin that was entered was incorrected please re-enter, you have one more chance to re-enter:\t"<<endl;
+				cin>>pin;				//gives the person a second chance to enter their pin correctly
+				pin_correctness=checkingsaccount.checkpin(pin);
+				if(pin_correctness!=1){
+					cout<<"pin number was entered incorrectly twice program is now terminated"<<endl;
+					//exitcheck=1;
+					return 0;			//if the pin is not entered correctly a second time then the program ends
+				}
 			}
+			onlyonce=1;
 		}
 		cout<<"Your pin was Entered successfully, ";
 		checkingsaccount.print_info();			//prints out the checkings account info
-		if(savings_check == 2){					//if savings_check is 2 there is not an existing savings account made for a person
+		//if(savings_check == 2){				//if savings_check is 2 there is not an existing savings account made for a person
 			cout<<"Please choose an option for your bank account.\nEnter 1 to withdraw.\nEnter 2 to Deposit."<<endl;
-			cout<<"Enter 3 To create a savings account"<<endl;
+			cout<<"Enter 3 To create a savings account \nEnter 4 to exit."<<endl;
 			cin>>choice;
 			switch(choice){
 			case 1:
 				cout<<"Enter the amount of that you would like to withdraw:\t";
 				cin>>withdraw;
-				checkingsaccount-withdraw;			//uses an operator to do the withdraw
+				checkingsaccount-withdraw;		//uses an operator to do the withdraw
 				checkingsaccount.updatefile();		//update all the information in the file
 				break;
 			case 2:
@@ -273,15 +317,38 @@ int main() {
 				cin>>savings_start;
 				savingsaccount.createsavingsaccount(savings_start);
 				break;
+			case 4:
+				cout<<"Thank you and have a great day!"<<endl;
+				exitcheck=1;
+				break;
 			default:
 				cout<<"The wrong value was input"<<endl;
 				break;
 			}
 		}
 
-		if (savings_check == 1){				//if saving_check is a 1 then there is already a savings account made for the person and there is an existing file.
+
+		if (check==1 && savings_check == 1){				//if saving_check is a 1 then there is already a savings account made for the person and there is an existing file.
+			if(onlyonce==0){
+				cout<<"Has an existing account"<<endl;
+				cout<<"please enter your pin number:\t"<<endl;
+				cin>>pin;					//this pin can be entered continously unlike when the pin is initialized
+				pin_correctness=checkingsaccount.checkpin(pin);	//checks to see if the pin entered is the same as the pin for the account
+				if (pin_correctness!=1){
+					cout<<"The pin that was entered was incorrected please re-enter, you have one more chance to re-enter:\t"<<endl;
+					cin>>pin;				//gives the person a second chance to enter their pin correctly
+					pin_correctness=checkingsaccount.checkpin(pin);
+					if(pin_correctness!=1){
+						cout<<"pin number was entered incorrectly twice program is now terminated"<<endl;
+						//exitcheck=1;
+						return 0;			//if the pin is not entered correctly a second time then the program ends
+					}
+				}
+				onlyonce=1;
+			}
 			cout<<"Please choose an option for your bank account.\nEnter 1 to withdraw.\nEnter 2 to Deposit money into your checkings account."<<endl;
-			cout<<"Enter 3 To Deposit money into your savings account. \nEnter 4 To withdraw money out of the savings \n Enter 5 to make a transfer."<<endl;
+			cout<<"Enter 3 To Deposit money into your savings account. \nEnter 4 To withdraw money out of the savings \nEnter 5 to make a transfer."<<endl;
+			cout<<"Enter 6 to exit."<<endl;
 			cin>>choice;
 			switch(choice){
 			case 1:
@@ -323,6 +390,10 @@ int main() {
 
 
 				break;
+			case 6:
+				cout<<"Thank you and have a great day!"<<endl;
+				exitcheck=1;
+				break;
 			default:
 				cout<<"The wrong value was input"<<endl;
 				break;
@@ -330,7 +401,7 @@ int main() {
 
 		}
 
-	}
+
 
 
 	if(check==2){
@@ -339,16 +410,22 @@ int main() {
 		cin>>yorn;						//if 1 then a checkings account is created and the information is input into a txt file if 2 then the program exits
 		if(yorn==2){
 			cout<<"Thank you for coming in today!"<<endl;
-			return 0;
+			exitcheck=1;
+			//return 0;
 		}
 		if(yorn==1){
 			checkingsaccount.createcheckings();	//creates a file win the name, pin, and money input stored inside
+			checkingsaccount.getpin();
+			onlyonce=1;
 		}
 	}
-	Checkings &x = checkingsaccount;
-	Checkings &y = savingsaccount;
-	x.print_info();								//uses dynamic binding to use the correct print statment
-	y.print_info();
+
+
+	}
+	//Checkings &x = checkingsaccount;
+	//Checkings &y = savingsaccount;
+	//x.print_info();								//uses dynamic binding to use the correct print statment
+	//y.print_info();
 
 
 
