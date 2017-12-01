@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <stack>
@@ -28,6 +30,9 @@ class Checkings{
 		virtual void operator+(float deposit);
 		virtual void operator-(float withdraw);
 		void updatefile();
+		void correctmoneyamount(float moneyamount);
+		float checkfail(float moneyamount);
+		int checkfail(int x);
 		virtual void print_info(){
 			cout<<"Your current checkings balance is:\t "<<moneyamount<<"\n"<<endl;
 		}
@@ -64,9 +69,11 @@ void Checkings::createcheckings(){
 	cout<<"To choose your pin enter 5 digits individually (1 enter 2 enter ect.)"<<endl;
 	while(i<5){
 		cin>>hold;
+		hold=checkfail(hold);	//making sure a number is entered and not a character
 		while(hold<0 || hold>9){
 			cout<<"Please enter each number individually from 0-9 and a total of 5 numbers to initialize your pin"<<endl;
 			cin>>hold;
+			hold=checkfail(hold);	//making sure a number is entered and not a character
 		}
 		pin.push_back(hold);	//this is the person creating the pin and they must input each number individually at to initialize
 		++i;
@@ -84,9 +91,11 @@ void Checkings::createcheckings(){
 		i=0;
 		while(i<5){
 			cin>>hold;
+			hold=checkfail(hold);	//making sure a number is entered and not a character
 			while(hold<0||hold>9){
 				cout<<"Please enter each number individually from 0-9 and a total of 5 numbers to initialize your pin"<<endl;
 				cin>>hold;
+				hold=checkfail(hold);	//making sure a number is entered and not a character
 			}
 			pin.push_back(hold);
 			++i;
@@ -98,7 +107,22 @@ void Checkings::createcheckings(){
 		cin>>yorn;				//asked if the pin they enter is the one they want to keep if yes then loop ends
 	}
 	cout<<"How much money would you like to deposit?"<<endl;
-	cin>>moneyamount;
+	int moneyamountcheck=0;
+	while(moneyamountcheck==0){
+		cin>>moneyamount;
+		moneyamount=checkfail(moneyamount);
+		try{
+			correctmoneyamount(moneyamount);	//checks if the money entered is greater than 0
+		}
+		catch(const int s){
+			if(s==0){
+				cout<<"money amount must be greater than zero please re-enter the amount of money you would like to deposit"<<endl;
+			}
+			if(s==1){
+				moneyamountcheck=1;
+			}
+		}
+	}
 	ofstream myfile;
 	myfile.open(checkingsfilename);
 	myfile<<name<<"\t";			//name/fingerprint of person is entered into the file
@@ -172,6 +196,33 @@ void Checkings::updatefile(){
 	myfile<<pinnumber<<"\t";
 	myfile<<moneyamount;
 	myfile.close();
+}
+
+void Checkings::correctmoneyamount(float moneyamount){
+	if(moneyamount<=0)
+		throw(0);
+	if(moneyamount>0)
+		throw(1);
+}
+
+float Checkings::checkfail(float moneyamount){
+	while (cin.fail()) {
+		cout<<"money amount entered must be a number"<<endl;
+		cin.clear();
+		cin.ignore(256,'\n');
+		cin>>moneyamount;
+	}
+	return moneyamount;
+}
+
+int Checkings::checkfail(int x){
+	while (cin.fail()) {
+		cout<<"Must enter a number."<<endl;
+		cin.clear();
+		cin.ignore(256,'\n');
+		cin>>x;
+	}
+	return x;
 }
 
 class Savings: public Checkings{
@@ -288,10 +339,12 @@ int main() {
 				cout<<"Has an existing account"<<endl;
 				cout<<"please enter your pin number:\t"<<endl;
 				cin>>pin;					//this pin can be entered continously unlike when the pin is initialized
+				pin=checkingsaccount.checkfail(pin);			//making sure number entered is not a character
 				pin_correctness=checkingsaccount.checkpin(pin);	//checks to see if the pin entered is the same as the pin for the account
 				if (pin_correctness!=1){
 					cout<<"The pin that was entered was incorrected please re-enter, you have one more chance to re-enter:\t"<<endl;
 					cin>>pin;				//gives the person a second chance to enter their pin correctly
+					pin=checkingsaccount.checkfail(pin);			//making sure number entered is not a character
 					pin_correctness=checkingsaccount.checkpin(pin);
 					if(pin_correctness!=1){
 						cout<<"pin number was entered incorrectly twice program is now terminated"<<endl;
@@ -310,18 +363,21 @@ int main() {
 			case 1:
 				cout<<"Enter the amount of that you would like to withdraw:\t";
 				cin>>withdraw;
+				withdraw=checkingsaccount.checkfail(withdraw);
 				checkingsaccount-withdraw;		//uses an operator to do the withdraw
 				checkingsaccount.updatefile();	//update all the information in the file
 				break;
 			case 2:
 				cout<<"Enter the amount of money that you would like to deposit:\t";
 				cin>>deposit;
+				deposit=checkingsaccount.checkfail(deposit);
 				checkingsaccount+deposit;		//uses an operator to do the deposit
 				checkingsaccount.updatefile();	//updates all the information in the file
 				break;
 			case 3:
 				cout<<"How much money would you like to start with in your savings accout?"<<endl;
 				cin>>savings_start;
+				savings_start=checkingsaccount.checkfail(savings_start);
 				savingsaccount.createsavingsaccount(savings_start);
 				break;
 			case 4:
@@ -343,10 +399,12 @@ int main() {
 				cout<<"Has an existing account"<<endl;
 				cout<<"please enter your pin number:\t"<<endl;
 				cin>>pin;						//this pin can be entered continously unlike when the pin is initialized
+				pin=checkingsaccount.checkfail(pin);			//making sure number entered is not a character
 				pin_correctness=checkingsaccount.checkpin(pin);	//checks to see if the pin entered is the same as the pin for the account
 				if (pin_correctness!=1){
 					cout<<"The pin that was entered was incorrected please re-enter, you have one more chance to re-enter:\t"<<endl;
 					cin>>pin;					//gives the person a second chance to enter their pin correctly
+					pin=checkingsaccount.checkfail(pin);			//making sure number entered is not a character
 					pin_correctness=checkingsaccount.checkpin(pin);
 					if(pin_correctness!=1){
 						cout<<"pin number was entered incorrectly twice program is now terminated"<<endl;
@@ -363,24 +421,28 @@ int main() {
 			case 1:
 				cout<<"Enter the amount of that you would like to withdraw:\t";
 				cin>>withdraw;
+				withdraw=checkingsaccount.checkfail(withdraw);
 				checkingsaccount-withdraw;		//uses an operator to do the withdraw
 				checkingsaccount.updatefile();	//update all the information in the file
 				break;
 			case 2:
 				cout<<"Enter the amount of money that you would like to deposit:\t";
 				cin>>deposit;
+				deposit=checkingsaccount.checkfail(deposit);
 				checkingsaccount+deposit;		//uses an operator to do the deposit
 				checkingsaccount.updatefile();	//updates all the information in the file
 				break;
 			case 3:
 				cout<<"How much money would you like to withdraw from you savings account?"<<endl;
 				cin>>savings_withdraw;
+				savings_withdraw=checkingsaccount.checkfail(savings_withdraw);
 				savingsaccount-savings_withdraw;	//does a withdraw from savings using an operator
 				savingsaccount.updatesavingsfile();	//updates all the information in the file
 				break;
 			case 4:
 				cout<<"How much money would you like to deposit into your savings account?"<<endl;
 				cin>>savings_deposit;
+				savings_deposit=checkingsaccount.checkfail(savings_deposit);
 				savingsaccount+savings_deposit;		//does a deposit in the savings using a operator
 				savingsaccount.updatesavingsfile();	//updates all the information in the file
 				break;
@@ -389,6 +451,8 @@ int main() {
 				cin>>transferbool;
 				cout<<"Enter the amount of money you would like to transfer"<<endl;
 				cin>>transfer_amount;
+				transfer_amount=checkingsaccount.checkfail(transfer_amount);
+				transfer_amount=(transfer_amount);
 				if(transferbool==1){
 					checkingsaccount-transfer_amount;//transfers money from checkings to savings
 					savingsaccount+transfer_amount;
@@ -424,6 +488,7 @@ int main() {
 			cout<<"Does not have an account"<<endl;
 			cout<<"would you like to create a checkings account? Enter 1 for yes and 2 for no:\t"<<endl;
 			cin>>yorn;						//if 1 then a checkings account is created and the information is input into a txt file if 2 then the program exits
+			pin=checkingsaccount.checkfail(pin);			//making sure number entered is not a character
 			if(yorn==2){
 				cout<<"Thank you and have a great day!"<<endl;
 				exitcheck=1;
