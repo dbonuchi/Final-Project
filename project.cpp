@@ -33,6 +33,17 @@ class Checkings{
 		void correctmoneyamount(float moneyamount);
 		float checkfail(float moneyamount);
 		int checkfail(int x);
+		float getmoneyamount();
+
+		float negativedeposit(float deposit){
+			while (deposit<0){
+				cout<<"Deposit cannot be negative! Please re-enter the deposit amount"<<endl;
+				cin>>deposit;
+			}
+			return deposit;
+		}
+
+		virtual float withdrawtoolarge(float withdraw);
 		virtual void print_info(){
 			cout<<"Your current checkings balance is:\t "<<moneyamount<<"\n"<<endl;
 		}
@@ -186,6 +197,24 @@ void Checkings::operator +(float deposit){
 	moneyamount+=deposit;
 }
 
+//this function checks the withdraw for error of being to large or being negative.
+float Checkings::withdrawtoolarge(float withdraw){
+	int i=0;
+	while(i==0){
+		if (withdraw>moneyamount){		//if the withdraw is more then the money in the account then it will not happen
+			cout<<"\nDenied!\nThe money amount you are trying to withdraw is too large. Please re-enter a withdraw amount."<<endl;
+			cin>>withdraw;
+		}
+		if(withdraw<0){					//if the withdraw is negative then the withdraw will not happen.
+			cout<<"Withdraw amount cannout be negative! Please re-enter withdraw amount"<<endl;
+			cin>>withdraw;
+		}
+		if(withdraw<moneyamount && withdraw>=0){
+			i=1;				//when i=1 then the withdraw has no error
+		}
+	}
+	return withdraw;
+}
 /*
  * file information is updated and the money amount is changed
  */
@@ -198,6 +227,7 @@ void Checkings::updatefile(){
 	myfile.close();
 }
 
+
 void Checkings::correctmoneyamount(float moneyamount){
 	if(moneyamount<=0)
 		throw(0);
@@ -205,6 +235,7 @@ void Checkings::correctmoneyamount(float moneyamount){
 		throw(1);
 }
 
+//checkfail checks to see if a float was input instead of a char
 float Checkings::checkfail(float moneyamount){
 	while (cin.fail()) {
 		cout<<"money amount entered must be a number"<<endl;
@@ -215,6 +246,7 @@ float Checkings::checkfail(float moneyamount){
 	return moneyamount;
 }
 
+//checkfail checks to see if an interger value was input instead of a char
 int Checkings::checkfail(int x){
 	while (cin.fail()) {
 		cout<<"Must enter a number."<<endl;
@@ -223,6 +255,10 @@ int Checkings::checkfail(int x){
 		cin>>x;
 	}
 	return x;
+}
+
+float Checkings::getmoneyamount(){
+	return moneyamount;
 }
 
 class Savings: public Checkings{
@@ -234,10 +270,12 @@ class Savings: public Checkings{
 		Savings(string input);
 		int savingsgetcheck();
 		void createsavingsaccount(float savingsstart);
-		void operator+(float deposit);	//this operator is a virtual operator
-		void operator-(float withdraw);	//this operator is also a virtual operator
+		virtual void operator+(float deposit);	//this operator is a virtual operator
+		virtual void operator-(float withdraw);	//this operator is also a virtual operator
 		void updatesavingsfile();
-		void print_info(){
+		float withdrawtoolarge(float withdraw);
+		float transfercheck(float transfer,float checkingsmoney, int transfertype);
+		virtual void print_info(){
 			cout<<"The money that is in your savings account is "<<savings_money<<"\n"<<endl;
 		}
 
@@ -311,6 +349,46 @@ void Savings::updatesavingsfile(){
 	myfile.close();
 }
 
+//this function checks the withdraw for error of being to large or being negative.
+float Savings::withdrawtoolarge(float withdraw){
+	int i=0;
+	while(i==0){
+		if (withdraw>savings_money){	//if the withdraw is more then the money in the account then it will not happen
+			cout<<"\nDenied!\nThe money amount you are trying to withdraw is too large. Please re-enter a withdraw amount."<<endl;
+			cin>>withdraw;
+		}
+		if(withdraw<0){			//if the withdraw is negative then the withdraw will not happen.
+			cout<<"Withdraw amount cannout be negative! Please re-enter withdraw amount"<<endl;
+			cin>>withdraw;
+		}
+		if(withdraw<savings_money && withdraw>=0){
+			i=1;				//when i=1 then the withdraw has no error
+		}
+	}
+	return withdraw;
+}
+
+//makes sure money transfer does not exceed the amount that an account
+float Savings::transfercheck(float transfer,float checkingsmoney, int transfertype){
+	if(transfertype==1){		//type 1 is tranfer from checkings to savings
+		//if the transfer amount is larger than the money in the checkings the transfer cannot happen
+		while(transfer>checkingsmoney){
+			cout<<"The money transfered from the checkings cannot exceed the money in the account"<<endl;
+			cout<<"Please re-enter a transfer amount from your checkings to your savings"<<endl;
+			cin>>transfer;
+		}
+	}
+
+	if(transfertype==2){		//type 2 is a transfer from savings to checkings
+		//if the transfer amount is larger than the money in the savings the transfer cannot happen
+		while(transfer>savings_money){
+			cout<<"The money transfered from the savings cannot exceed the money in the account"<<endl;
+			cout<<"Please re-enter a transfer amount from your savings to your checkings"<<endl;
+			cin>>transfer;
+		}
+	}
+	return transfer;
+}
 
 
 
@@ -359,26 +437,29 @@ int main() {
 			cout<<"Please choose an option for your bank account.\nEnter 1 to withdraw.\nEnter 2 to Deposit."<<endl;
 			cout<<"Enter 3 To create a savings account \nEnter 4 to display your account information \nEnter 5 to exit."<<endl;
 			cin>>choice;
+			choice=checkingsaccount.checkfail(choice);
 			switch(choice){
 			case 1:
 				cout<<"Enter the amount of that you would like to withdraw:\t";
 				cin>>withdraw;
-				withdraw=checkingsaccount.checkfail(withdraw);
+				withdraw=checkingsaccount.checkfail(withdraw);		//makes sure withdraw is a float
+				withdraw=checkingsaccount.withdrawtoolarge(withdraw);//makes sure withdraw is not too large
 				checkingsaccount-withdraw;		//uses an operator to do the withdraw
 				checkingsaccount.updatefile();	//update all the information in the file
 				break;
 			case 2:
 				cout<<"Enter the amount of money that you would like to deposit:\t";
 				cin>>deposit;
-				deposit=checkingsaccount.checkfail(deposit);
+				deposit=checkingsaccount.checkfail(deposit);		//makes sure deposit is a float
+				deposit=checkingsaccount.negativedeposit(deposit); //makes sure deposit is nonnegative
 				checkingsaccount+deposit;		//uses an operator to do the deposit
 				checkingsaccount.updatefile();	//updates all the information in the file
 				break;
 			case 3:
 				cout<<"How much money would you like to start with in your savings accout?"<<endl;
 				cin>>savings_start;
-				savings_start=checkingsaccount.checkfail(savings_start);
-				savingsaccount.createsavingsaccount(savings_start);
+				savings_start=checkingsaccount.checkfail(savings_start);	//makes sure deposit is a float
+				savingsaccount.createsavingsaccount(savings_start);			//creates a savings account is the desired money
 				break;
 			case 4:
 				checkingsaccount.print_info();	//informs the user of the money in the checkings account
@@ -421,28 +502,32 @@ int main() {
 			case 1:
 				cout<<"Enter the amount of that you would like to withdraw:\t";
 				cin>>withdraw;
-				withdraw=checkingsaccount.checkfail(withdraw);
+				withdraw=checkingsaccount.checkfail(withdraw);		//makes sure withdraw is a float
+				withdraw=checkingsaccount.withdrawtoolarge(withdraw);//makes sure withdraw isn't too large
 				checkingsaccount-withdraw;		//uses an operator to do the withdraw
 				checkingsaccount.updatefile();	//update all the information in the file
 				break;
 			case 2:
 				cout<<"Enter the amount of money that you would like to deposit:\t";
 				cin>>deposit;
-				deposit=checkingsaccount.checkfail(deposit);
+				deposit=checkingsaccount.checkfail(deposit);		//makes sure deposit is only a float
+				deposit=checkingsaccount.negativedeposit(deposit);	//makes sure deposit is nonnegative
 				checkingsaccount+deposit;		//uses an operator to do the deposit
 				checkingsaccount.updatefile();	//updates all the information in the file
 				break;
 			case 3:
 				cout<<"How much money would you like to withdraw from you savings account?"<<endl;
 				cin>>savings_withdraw;
-				savings_withdraw=checkingsaccount.checkfail(savings_withdraw);
+				savings_withdraw=checkingsaccount.checkfail(savings_withdraw);		//makes sure withdraw is only a float
+				savings_withdraw=savingsaccount.withdrawtoolarge(savings_withdraw);	//makes sure withdraw isn't too large
 				savingsaccount-savings_withdraw;	//does a withdraw from savings using an operator
 				savingsaccount.updatesavingsfile();	//updates all the information in the file
 				break;
 			case 4:
 				cout<<"How much money would you like to deposit into your savings account?"<<endl;
 				cin>>savings_deposit;
-				savings_deposit=checkingsaccount.checkfail(savings_deposit);
+				savings_deposit=checkingsaccount.checkfail(savings_deposit);		//makes sure deposit is only a float
+				savings_deposit=checkingsaccount.negativedeposit(savings_deposit);	//makes sure deposit is nonnegative
 				savingsaccount+savings_deposit;		//does a deposit in the savings using a operator
 				savingsaccount.updatesavingsfile();	//updates all the information in the file
 				break;
@@ -452,7 +537,9 @@ int main() {
 				cout<<"Enter the amount of money you would like to transfer"<<endl;
 				cin>>transfer_amount;
 				transfer_amount=checkingsaccount.checkfail(transfer_amount);
-				transfer_amount=(transfer_amount);
+				float checkingsmoney;
+				checkingsmoney=checkingsaccount.getmoneyamount();
+				transfer_amount=savingsaccount.transfercheck(transfer_amount,checkingsmoney,transferbool);
 				if(transferbool==1){
 					checkingsaccount-transfer_amount;//transfers money from checkings to savings
 					savingsaccount+transfer_amount;
