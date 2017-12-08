@@ -6,6 +6,7 @@
 #include <stack>
 #include <fstream>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
@@ -405,6 +406,9 @@ int main() {
 	float deposit,withdraw,savings_start, savings_deposit,savings_withdraw,transfer_amount;
 	cout<<"Enter your name to set up an account or access an old account"<<endl;
 	getline(cin,name);						//inputs fingerprint/name
+	for (auto &c :name)
+		c = toupper(c);	
+	remove( name.begin(), name.end(), ' ');
 	Checkings checkingsaccount(name);		//name or fingerprint is then checked to see if it is in the system
 	Savings savingsaccount(name);
 	Checkings &x = checkingsaccount;
